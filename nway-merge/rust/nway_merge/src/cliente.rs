@@ -1,6 +1,6 @@
-use std::cmp::Ordering;
+use std::cmp::{Ordering, min};
 use std::fs::File;
-use std::io::Read;
+use std::io::{Write, Read};
 
 use chrono::{NaiveDate};
 
@@ -30,6 +30,20 @@ impl PartialOrd for Cliente {
 
 impl Serializable for Cliente {
     fn serialize(&self, file: &mut File) -> Result<(), SerializeError> {
+        file.write_u32::<BigEndian>(self.codigo)?;
+
+        let bytes = self.nome.as_bytes();
+        
+        let boundary = min(50, bytes.len());
+        let diff = 50 - boundary;
+        file.write_all(&bytes[..boundary])?;
+
+        for _ in 0..diff {
+            file.write_u8(0)?;
+        }
+
+        file.write_i64::<BigEndian>(self.data_nascimento.format("%s").to_string().parse().unwrap())?;
+
         Ok(())
     }
 
