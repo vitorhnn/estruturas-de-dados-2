@@ -1,0 +1,7 @@
+[package]
+name = "replacement_sort"
+version = "0.1.0"
+authors = ["Victor Hermann Chiletto <victor.vasconceloschiletto@gmail.com>"]
+
+[dependencies]
+byteorder = "1"
