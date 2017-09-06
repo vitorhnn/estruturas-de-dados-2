@@ -2,18 +2,18 @@ use std::cmp::{Ordering, min};
 use std::fs::File;
 use std::io::{Write, Read};
 
-use chrono::{NaiveDate};
+use chrono::{DateTime, NaiveDateTime, Utc};
 
 use serializable::Serializable;
 use serializable::SerializeError;
 
 use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Cliente {
     codigo: u32,
     nome: String, // 50 bytes of utf-8 in the file
-    data_nascimento: NaiveDate, 
+    data_nascimento: DateTime<Utc>,
 }
 
 impl PartialEq for Cliente {
@@ -42,7 +42,7 @@ impl Serializable for Cliente {
             file.write_u8(0)?;
         }
 
-        file.write_i64::<BigEndian>(self.data_nascimento.format("%s").to_string().parse().unwrap())?;
+        file.write_i64::<BigEndian>(self.data_nascimento.timestamp())?;
 
         Ok(())
     }
@@ -58,7 +58,7 @@ impl Serializable for Cliente {
 
         let data_nascimento = file.read_i64::<BigEndian>()?;
 
-        let data_nascimento = NaiveDate::parse_from_str(&data_nascimento.to_string(), "%s")?;
+        let data_nascimento = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(data_nascimento, 0), Utc);
 
         Ok(Cliente {codigo, nome, data_nascimento})
     }
