@@ -11,9 +11,9 @@ use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 
 #[derive(Debug, Clone)]
 pub struct Cliente {
-    codigo: u32,
-    nome: String, // 50 bytes of utf-8 in the file
-    data_nascimento: DateTime<Utc>,
+    pub codigo: u32,
+    pub nome: String, // 50 bytes of utf-8 in the file
+    pub data_nascimento: DateTime<Utc>,
 }
 
 impl PartialEq for Cliente {
