@@ -1,0 +1,9 @@
+[package]
+name = "fakegen"
+version = "0.1.0"
+authors = ["Victor Hermann Chiletto <victor.vasconceloschiletto@gmail.com>"]
+
+[dependencies]
+byteorder = "1"
+chrono = "0.4"
+rand = "0.3"

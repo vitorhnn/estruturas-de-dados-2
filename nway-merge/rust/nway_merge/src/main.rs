@@ -14,8 +14,6 @@ use serializable::SerializeError;
 
 use cliente::Cliente;
 
-use chrono::prelude::*;
-
 struct Node<T> where T: PartialOrd + Clone {
     val: T,
     left: Option<Box<Node<T>>>,
@@ -300,28 +298,13 @@ fn nway_merge<T>(mut files: Vec<File>, n: usize) -> Result<(), SerializeError>
 }
 
 fn main() {
-    let mut codigo = 0;
-    let mut bucket = 0;
-
-    // TODO: Write a mock generator (using Faker?)
-    while codigo < 4000 {
-        let mut written = 0;
-        let mut file = File::create(format!("bucket-{}", bucket)).unwrap();
-        while written < 500 {
-            Cliente { codigo, nome: "aaa".to_string(), data_nascimento: Utc::now() }.serialize(&mut file);
-            codigo += 1;
-            written += 1;
-        }
-        bucket += 1;
-    }
-
     let mut files = Vec::new();
 
-    for i in 0..8 {
+    for i in 0..25 {
         files.push(File::open(format!("bucket-{}", i)).unwrap());
     }
 
-    nway_merge::<Cliente>(files, 12);
+    nway_merge::<Cliente>(files, 5).expect("failed to merge");
 
     println!("aeiou");
 }
