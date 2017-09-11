@@ -28,19 +28,16 @@ fn main() {
     }
 
     for i in 0..records.len() / 400 {
-        let mut written = 0;
         let mut bucket = File::create(format!("bucket-{}", i)).expect("Failed to create a bucket");
 
-        while written < 400 {
-            written += 1;
+        let len = records.len().saturating_sub(400);
 
-            let len = records.len().saturating_sub(400);
+        let mut tail = records.split_off(len);
 
-            let tail = records.split_off(len);
+        tail.sort();
 
-            for record in tail {
-                record.serialize(&mut bucket).expect("Failed to write to a bucket");
-            }
+        for record in tail {
+            record.serialize(&mut bucket).expect("Failed to write to a bucket");
         }
     }
 }
