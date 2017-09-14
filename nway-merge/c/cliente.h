@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 typedef struct {
-    int32_t cod;
+    uint32_t cod;
     char nome[50];
     int64_t data_nascimento; // seconds since epoch
 } Cliente;

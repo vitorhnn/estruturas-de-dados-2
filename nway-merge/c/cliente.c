@@ -3,8 +3,8 @@
 
 void cliente_serialize(Cliente *cliente, FILE *out)
 {
-    int32_t codbe = htobe32(cliente->cod);
-    fwrite(&codbe, sizeof(int32_t), 1, out);
+    uint32_t codbe = htobe32(cliente->cod);
+    fwrite(&codbe, sizeof(uint32_t), 1, out);
     fwrite(cliente->nome, 1, sizeof(cliente->nome), out);
 
     int64_t databe = htobe64(cliente->data_nascimento);
@@ -13,7 +13,7 @@ void cliente_serialize(Cliente *cliente, FILE *out)
 
 bool cliente_deserialize(Cliente *out, FILE *in)
 {
-    size_t read = fread (&out->cod, sizeof(int32_t), 1, in);
+    size_t read = fread (&out->cod, sizeof(uint32_t), 1, in);
 
     if (read < 1) {
         return false;
