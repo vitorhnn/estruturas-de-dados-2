@@ -1,6 +1,6 @@
 use std::cmp::{Ordering, min};
 use std::fs::File;
-use std::io::{Write, Read};
+use std::io::{BufWriter, Write, Read};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 
@@ -30,6 +30,12 @@ impl PartialOrd for Cliente {
 
 impl Serializable for Cliente {
     fn serialize(&self, file: &mut File) -> Result<(), SerializeError> {
+        let mut file = BufWriter::new(file);
+
+        if self.codigo == 3763629520 {
+            println!("entra aqui arrombado");
+        }
+
         file.write_u32::<BigEndian>(self.codigo)?;
 
         let bytes = self.nome.as_bytes();
