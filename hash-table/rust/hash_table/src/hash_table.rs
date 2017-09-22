@@ -74,25 +74,28 @@ impl<T> Serialize for Record<T> where T: Serialize {
 }
 
 impl<T> FileHashTable<T> where T: Serialize {
-    pub fn new(mut table: File, entries: File) -> FileHashTable<T> {
-        let size = 7;
-
-        for _ in 0..7 {
-            table.write_i64::<BigEndian>(-1).unwrap();
-        }
-
+    pub fn open(table: File, entries: File, size: usize) -> FileHashTable<T> {
         FileHashTable{ table, entries, size, _marker: marker::PhantomData }
     }
 
+    pub fn new(mut table: File, entries: File, size: usize) -> FileHashTable<T> {
+        for _ in 0..size {
+            table.write_i64::<BigEndian>(-1).unwrap();
+        }
+
+        FileHashTable::<T>::open(table, entries, size)
+    }
+
     fn search_for_empty(&mut self) -> Result<u64, SerializeError> {
-        self.entries.seek(SeekFrom::Start(0))?;
+        let mut offset = self.entries.seek(SeekFrom::Start(0))?;
         let mut record = Record::<T>::deserialize(&mut self.entries)?;
 
         while record.valid {
+            offset = self.entries.seek(SeekFrom::Current(0))?; // this is probably butt slow
             record = Record::<T>::deserialize(&mut self.entries)?;
         }
 
-        Ok(self.entries.seek(SeekFrom::Current(0))?)
+        Ok(offset)
     }
 
     pub fn insert(&mut self, key: u64, val: T) -> Result<(), SerializeError> {
@@ -103,8 +106,8 @@ impl<T> FileHashTable<T> where T: Serialize {
 
         if maybe_offset == -1 {
             let written_at = match self.search_for_empty() {
-                Ok(val) => val,
-                Err(_) => self.entries.seek(SeekFrom::End(0))?
+                Ok(val) => self.entries.seek(SeekFrom::Start(val))?,
+                Err(_) => self.entries.seek(SeekFrom::End(0))?,
             };
 
             let record = Record::from_t(val, key);
@@ -115,9 +118,14 @@ impl<T> FileHashTable<T> where T: Serialize {
             let mut entry_offset = self.entries.seek(SeekFrom::Start(maybe_offset as u64))?;
             let mut record = Record::<T>::deserialize(&mut self.entries)?;
 
-            while record.next != -1 {
+            while record.next != -1 && record.key != key {
                 entry_offset = self.entries.seek(SeekFrom::Start(record.next as u64))?;
                 record = Record::<T>::deserialize(&mut self.entries)?;
+            }
+
+            if record.key == key {
+                // already present
+                return Ok(());
             }
 
             let written_at = match self.search_for_empty() {
@@ -179,6 +187,31 @@ impl<T> FileHashTable<T> where T: Serialize {
             }
 
             Ok(())
+        }
+    }
+
+    pub fn search(&mut self, key: u64) -> Result<T, SerializeError> {
+        let hash = key % (self.size as u64);
+        let pos = hash * size_of::<usize>() as u64;
+        self.table.seek(SeekFrom::Start(pos))?;
+        let maybe_offset = self.table.read_i64::<BigEndian>()?;
+
+        if maybe_offset == -1 {
+            panic!("Attempted to search an unregistered key"); // TODO: maybe not panic
+        } else {
+            self.entries.seek(SeekFrom::Start(maybe_offset as u64))?;
+            let mut maybe_return = Record::<T>::deserialize(&mut self.entries)?;
+
+            while maybe_return.key != key  {
+                if maybe_return.next != -1 {
+                    self.entries.seek(SeekFrom::Start(maybe_return.next as u64))?;
+                    maybe_return = Record::<T>::deserialize(&mut self.entries)?;
+                } else {
+                    panic!("Key not registered"); // again, this should probably not be a panic
+                }
+            }
+
+            Ok(maybe_return.val)
         }
     }
 }
