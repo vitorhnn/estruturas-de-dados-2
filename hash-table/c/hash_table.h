@@ -17,3 +17,7 @@ FileHashTable table_new(FILE *table, FILE *entries, size_t size);
 
 void table_insert(FileHashTable *self, uint64_t key, Cliente val);
 
+void table_delete(FileHashTable *self, uint64_t key);
+
+Cliente table_search(FileHashTable *self, uint64_t key);
+

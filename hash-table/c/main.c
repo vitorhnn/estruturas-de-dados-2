@@ -10,6 +10,12 @@ int main(void)
     };
 
     table_insert(&table, c.cod, c);
+    c.cod += 7;
+    table_insert(&table, c.cod, c);
+    c.cod += 7;
+    table_insert(&table, c.cod, c);
+
+    table_delete(&table, c.cod - 7);
 
     return 0;
 }
