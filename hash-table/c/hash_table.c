@@ -200,7 +200,7 @@ void table_delete(FileHashTable *self, uint64_t key)
             Record prev_r;
             record_deserialize(&prev_r, self->entries);
             fseek(self->entries, prev_offset, SEEK_SET);
-            record.next = next;
+            prev_r.next = next;
             record_serialize(&prev_r, self->entries);
         }
     }
