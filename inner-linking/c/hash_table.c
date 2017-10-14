@@ -13,7 +13,7 @@ static size_t fuck_this_horrible_language(void)
         sizeof(char) * 100 + // always 100
         sizeof(uint64_t) +
         sizeof(int64_t) +
-        sizeof(bool);
+        sizeof(uint32_t);
 }
 
 static Record from_cliente(Cliente cliente, uint64_t key)
@@ -94,7 +94,7 @@ FileHashTable table_new(FILE *table, size_t size)
 {
     uint8_t dummy = 0;
 
-    size_t sz = sizeof(FILE *) + sizeof(size_t);
+    size_t sz = fuck_this_horrible_language();
 
     for (size_t i = 0; i < sz * size; ++i) {
         fwrite(&dummy, sizeof(dummy), 1, table);
@@ -107,14 +107,14 @@ static long search_for_empty(FileHashTable *self)
 {
     Record record;
     long offset;
-    fseek(self->table, 0, SEEK_SET);
+    fseek(self->table, self->size * fuck_this_horrible_language(), SEEK_SET); // skip the first area
 
     do {
         offset = ftell(self->table);
         bool success = record_deserialize(&record, self->table);
 
         if (!success) {
-            return seek_tell(self->table, 0, SEEK_SET);
+            return seek_tell(self->table, 0, SEEK_END);
         }
     } while (record.valid);
 
@@ -179,12 +179,13 @@ void table_delete(FileHashTable *self, uint64_t key)
 
 
         if (prev_offset != cur_offset) { // not the first element in the list
+            int64_t next = entry.next;
             entry.valid = false;
             entry.next = -1;
             fseek(self->table, cur_offset, SEEK_SET);
             record_serialize(&entry, self->table);
             fseek(self->table, prev_offset, SEEK_SET);
-            prev.next = -1;
+            prev.next = next;
             record_serialize(&prev, self->table);
         } else { // first entry in list. move the second to here, if it exists.
             if (entry.next != -1) {
